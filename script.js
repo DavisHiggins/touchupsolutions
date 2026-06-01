@@ -295,6 +295,15 @@
   function swatchStyle(color) {
     return 'background:linear-gradient(135deg,' + color + ',' + shade(color, 0.72) + ');';
   }
+  function esc(s) { return String(s).replace(/"/g, '&quot;'); }
+  // Real product photo at a chosen resolution; on load error it hides itself,
+  // revealing the color swatch behind it (so an image is never broken).
+  function imgTag(p, cls, w) {
+    if (!p.img) return '';
+    var src = w ? p.img.replace(/resizew=\d+/, 'resizew=' + w) : p.img;
+    return '<img class="' + cls + '" src="' + esc(src) + '" alt="' + esc(p.name) +
+           '" loading="lazy" decoding="async" onerror="this.classList.add(\'img-failed\')">';
+  }
 
   /* ---- toast ---- */
   var toastTimer;
@@ -339,7 +348,7 @@
         '<button class="btn btn--primary btn--sm" data-add="' + p.sku + '">Add to Cart</button>'
       : '<button class="btn btn--secondary btn--sm" data-quote="' + encodeURIComponent(p.name) + '">Request a Quote</button>';
     return '<article class="product-card">' +
-      '<div class="product-swatch" style="' + swatchStyle(p.color || '#9a6a3a') + '"><span class="tag">' + p.sub + '</span></div>' +
+      '<div class="product-swatch" style="' + swatchStyle(p.color || '#9a6a3a') + '">' + imgTag(p, 'product-img', 800) + '<span class="tag">' + p.sub + '</span></div>' +
       '<div class="product-body">' +
         '<span class="p-cat">' + p.sub + '</span>' +
         '<h4>' + p.name + '</h4>' +
@@ -446,7 +455,7 @@
     var p = bySku[sku];
     if (!p) return '';
     return '<div class="cart-line" data-line="' + sku + '">' +
-      '<div class="cart-line-sw" style="' + swatchStyle(p.color || '#9a6a3a') + '"></div>' +
+      '<div class="cart-line-sw" style="' + swatchStyle(p.color || '#9a6a3a') + '">' + imgTag(p, 'line-img', 200) + '</div>' +
       '<div class="cart-line-info">' +
         '<p class="cart-line-name">' + p.name + '</p>' +
         '<p class="cart-line-price">' + money(p.price) + '</p>' +
@@ -514,7 +523,7 @@
     var lines = skus.map(function (s) {
       var p = bySku[s], qty = c[s];
       return '<div class="co-line" data-line="' + s + '">' +
-        '<div class="co-line-sw" style="' + swatchStyle(p.color || '#9a6a3a') + '"></div>' +
+        '<div class="co-line-sw" style="' + swatchStyle(p.color || '#9a6a3a') + '">' + imgTag(p, 'line-img', 200) + '</div>' +
         '<div class="co-line-main">' +
           '<p class="co-line-name">' + p.name + '</p>' +
           '<div class="qty">' +

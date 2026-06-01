@@ -17,7 +17,8 @@ const DIVISIONS = {
   '/shop/metal-repair': 'metal-repair',
   '/shop/accessories': 'accessories',
   '/home-user-shop/furniture-fill-sticks': 'home-fill-sticks',
-  '/home-user-shop/furniture-markers': 'home-markers'
+  '/home-user-shop/furniture-markers': 'home-markers',
+  '/home-user-shop/furniture-touchup-kits': 'home-touchup-kits'
 };
 
 /* seed subcategory paths */
@@ -37,7 +38,8 @@ const SEEDS = [
   '/shop/accessories/fill-stick-accessories', '/shop/accessories/leather-accessories',
   '/shop/accessories/lubes-cleaners-polishes', '/shop/accessories/marker-accessories',
   '/shop/accessories/powder-accessories', '/shop/accessories/spray-systems',
-  '/home-user-shop/furniture-fill-sticks', '/home-user-shop/furniture-markers'
+  '/home-user-shop/furniture-fill-sticks', '/home-user-shop/furniture-markers',
+  '/home-user-shop/furniture-touchup-kits'
 ];
 
 /* ---- color resolver (swatch = the product's color) ---- */
@@ -96,7 +98,8 @@ const GROUP_OVERRIDE = {
   'accesories': 'Leather / Vinyl Accessories',
   'lubes-cleaners-polishes': 'Lubes / Cleaners / Polishes',
   'furniture-fill-sticks': 'Furniture Fill Sticks',
-  'furniture-markers': 'Furniture Markers'
+  'furniture-markers': 'Furniture Markers',
+  'furniture-touchup-kits': 'Furniture Touch Up Kits'
 };
 function groupFor(p, pageKey) {
   // strip the matched division root, take the first remaining path segment
@@ -116,7 +119,12 @@ function parseProducts(html) {
     let name = (b.match(/itemprop="name"[^>]*>([^<]+)</) || [])[1];
     if (!name) name = (b.match(/itemprop="name"\s+content="([^"]+)"/) || [])[1];
     const price = (b.match(/itemprop="price"\s+data-rate="([0-9.]+)"/) || [])[1] || '';
-    return { sku: (sku || '').trim(), name: decode(name || ''), price: price ? parseFloat(price) : null };
+    let img = (b.match(/<img[^>]*facets-item-cell-grid-image[^>]*src="([^"]+)"/) || [])[1]
+           || (b.match(/itemprop="image"[^>]*content="([^"]+)"/) || [])[1]
+           || (b.match(/<img[^>]+src="([^"]+)"/) || [])[1] || '';
+    img = decode(img).replace(/resizew=\d+/, 'resizew=500').replace(/resizeh=\d+/, 'resizeh=0');
+    if (/placeholder|no[-_]?image|spacer\.gif/i.test(img)) img = '';
+    return { sku: (sku || '').trim(), name: decode(name || ''), price: price ? parseFloat(price) : null, img: img };
   }).filter(r => r.sku && r.name);
 }
 
@@ -163,10 +171,11 @@ function crawl(p, depth) {
     }
     let added = 0;
     rows.forEach(r => {
-      if (!all[r.sku]) {
-        all[r.sku] = {
+      const key = pk + '|' + r.sku;   // same product may appear on multiple pages (e.g. home + industrial)
+      if (!all[key]) {
+        all[key] = {
           sku: r.sku, name: r.name, price: r.price,
-          page: pk, sub: sub, color: colorFor(r.name),
+          page: pk, sub: sub, color: colorFor(r.name), img: r.img || '',
           kit: /assortment|\bset\b|\bkit\b/i.test(r.name)
         };
         added++;

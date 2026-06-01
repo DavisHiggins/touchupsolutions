@@ -1205,8 +1205,22 @@ strong { font-weight: 700; }
   display: flex;
   align-items: flex-end;
   padding: 14px;
+  overflow: hidden;
 }
+.product-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: var(--white);
+  padding: 12px;
+  z-index: 1;
+}
+.product-img.img-failed { display: none; }       /* fall back to color swatch */
 .product-swatch .tag {
+  position: relative;
+  z-index: 2;
   font-size: 0.66rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -1274,10 +1288,11 @@ strong { font-weight: 700; }
    ------------------------------------------------------------ */
 .layout-sidebar {
   display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 48px;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 40px;
   align-items: start;
 }
+.layout-sidebar > * { min-width: 0; }   /* prevent product grid from blowing out the column */
 .sidebar-card {
   background: var(--espresso);
   color: var(--cream);
@@ -1774,7 +1789,16 @@ strong { font-weight: 700; }
   border-bottom: 1px solid var(--border-card);
   align-items: start;
 }
-.cart-line-sw { width: 52px; height: 52px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.08); }
+.cart-line-sw { width: 52px; height: 52px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.08); position: relative; overflow: hidden; }
+.line-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: var(--white);
+}
+.line-img.img-failed { display: none; }
 .cart-line-name { font-weight: 600; font-size: 0.9rem; color: var(--walnut); line-height: 1.3; margin-bottom: 4px; }
 .cart-line-price { font-size: 0.82rem; color: var(--stone); margin-bottom: 10px; }
 .cart-line-total { font-weight: 700; color: var(--bark); font-size: 0.92rem; white-space: nowrap; }
@@ -1844,7 +1868,7 @@ strong { font-weight: 700; }
   border-bottom: 1px solid var(--border-card);
   align-items: center;
 }
-.co-line-sw { width: 46px; height: 46px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.08); }
+.co-line-sw { width: 46px; height: 46px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.08); position: relative; overflow: hidden; }
 .co-line-name { font-weight: 600; font-size: 0.9rem; color: var(--walnut); margin-bottom: 8px; }
 .co-line-total { font-weight: 700; color: var(--bark); white-space: nowrap; }
 .co-totals { margin-top: 20px; }
@@ -1939,3 +1963,100 @@ strong { font-weight: 700; }
   .form-grid-2 { grid-template-columns: 1fr; }
   .cart-drawer { width: 100%; }
 }
+
+/* ============================================================
+   27. HERO LOGO · REAL VIDEO THUMBS · SDS RESOURCES
+   ============================================================ */
+/* Home hero logo badge */
+.hero-logo {
+  height: 84px;
+  width: auto;
+  margin-bottom: 22px;
+  filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.45));
+}
+@media (max-width: 768px) { .hero-logo { height: 64px; margin-bottom: 16px; } }
+
+/* Real YouTube thumbnails inside video cards */
+.video-thumb-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+.video-thumb-img.img-failed { display: none; }
+.video-thumb .play-btn { z-index: 2; }
+.video-thumb::after { z-index: 1; }
+
+/* SDS resources */
+.sds-groups {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+.sds-card {
+  background: var(--cream);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  padding: 26px 24px;
+  display: flex;
+  flex-direction: column;
+}
+.sds-card h3 {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--walnut);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sds-card h3::before {
+  content: '';
+  width: 10px; height: 10px;
+  border-radius: 3px;
+  background: var(--amber);
+  flex-shrink: 0;
+}
+.sds-card .sds-count {
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--stone);
+  font-weight: 600;
+  margin-bottom: 16px;
+  padding-left: 20px;
+}
+.sds-list { display: flex; flex-direction: column; gap: 2px; }
+.sds-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  color: var(--bark);
+  transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+.sds-link:hover { background: rgba(196, 136, 42, 0.1); color: var(--walnut); }
+.sds-link .pdf-ico {
+  flex-shrink: 0;
+  width: 26px; height: 26px;
+  border-radius: 6px;
+  background: rgba(196, 136, 42, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.56rem;
+  font-weight: 700;
+  color: var(--amber);
+  letter-spacing: 0.02em;
+}
+.sds-link .sds-name { flex: 1; line-height: 1.3; }
+.sds-link .dl-ico { flex-shrink: 0; opacity: 0; transition: opacity var(--t-fast) var(--ease); color: var(--amber); }
+.sds-link:hover .dl-ico { opacity: 1; }
+
+@media (max-width: 1024px) { .sds-groups { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 768px) { .sds-groups { grid-template-columns: 1fr; } }

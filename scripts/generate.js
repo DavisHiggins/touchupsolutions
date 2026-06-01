@@ -6,6 +6,32 @@
 const fs = require('fs');
 const path = require('path');
 const OUT = path.join(__dirname, '..');
+const SDS = require('./sds.json');   // { category: [ {label, url} ] } scraped from the live store
+
+/* ---------- real demo videos (IDs from the Touch Up Solutions YouTube channel) ---------- */
+const ytWatch = id => 'https://www.youtube.com/watch?v=' + id;
+const ytThumb = id => 'https://i.ytimg.com/vi/' + id + '/hqdefault.jpg';
+const YT_CHANNEL = 'https://www.youtube.com/user/touchupsolutions/featured';
+const VIDEOS = [
+  ['RVsN7LcczvY', 'Fill Stick Repair', 'Color-matched fill stick repair on a damaged wood surface.'],
+  ['O6u7_13zcPA', 'Burn-In Stick Repair', 'Melt-in burn-in repair for deep gouges and chips.'],
+  ['9hr1VkkOQMM', 'Solder Iron Burn-In &amp; Levelers', 'Using a soldering iron for burn-in fills, then leveling flush.'],
+  ['-TGBHePm4N8', 'Felt Marker Touch-Up', 'Color matching wood surfaces with refillable felt markers.'],
+  ['yvGtUrvuS30', 'Refillable Felt Markers', 'How the refillable felt marker system works.'],
+  ['OfACm9QXK-s', 'Brush-Tip Graining Pen', 'Recreating wood grain with a brush-tip graining pen.'],
+  ['1_CIO7D3B2k', 'Valve Marker Wood Graining', 'Valve marker repair and wood graining technique.'],
+  ['YGQTvI7gj70', 'Dye Toner Blending', 'Blending finish color with aerosol dye toner.'],
+  ['wNJCm2cFRdk', 'Pigmented Toner', 'Aerosol pigmented toner for opaque finish blending.'],
+  ['-Jk6a3BEm6Y', 'Powder Putty Fill', 'Filling and color-matching damage with powder putty.'],
+  ['KmlmuliBEw8', 'Powder Stick Application', 'Powder stick application for fast color fills.'],
+  ['0PQQhtbSPeA', 'Powder Wood Graining', 'Recreating wood grain using repair powders.'],
+  ['xzLNWG_-MSA', 'Color Flex II', 'Working with Color Flex II flexible repair putty.'],
+  ['ccWSoHRTtEI', 'Epoxy Stick + Felt Markers', 'Re-coloring an epoxy stick repair with felt markers.'],
+  ['-xiyBjZuP_Q', 'Wood Grain Repair: Burn-In + Graining Pen', 'A full grain repair combining a burn-in stick and graining pen.'],
+  ['eq2b-SVCQoI', 'Roll-Up Marker Bag &amp; Blender', 'Organizing markers and using the blender pen.'],
+];
+const videoCard = v =>
+  `<article class="video-card"><a class="video-thumb" href="${ytWatch(v[0])}" target="_blank" rel="noopener" aria-label="Watch: ${v[1]}"><img class="video-thumb-img" src="${ytThumb(v[0])}" alt="" loading="lazy" onerror="this.classList.add('img-failed')"><span class="play-btn"></span></a><div class="video-body"><h4>${v[1]}</h4><p>${v[2]}</p><a class="link-arrow" href="${ytWatch(v[0])}" target="_blank" rel="noopener">Watch Video</a></div></article>`;
 
 /* ---------- shared head ---------- */
 const head = (title, desc) => `<!DOCTYPE html>
@@ -47,7 +73,7 @@ const header = `
                 <ul>
                   <li><a href="products.html">View All Products</a></li>
                   <li><a href="industrial-shop.html">Request a Quote</a></li>
-                  <li><a href="catalogs.html">Catalogs</a></li>
+                  <li><a href="resources.html#sds">Safety Data Sheets</a></li>
                 </ul>
               </div>
             </div>
@@ -177,7 +203,6 @@ const header = `
 
         <li class="nav-item"><a class="nav-link" data-page="videos.html" href="videos.html">Videos</a></li>
         <li class="nav-item"><a class="nav-link" data-page="resources.html" href="resources.html">Resources</a></li>
-        <li class="nav-item"><a class="nav-link" data-page="catalogs.html" href="catalogs.html">Catalogs</a></li>
       </ul>
 
       <div class="nav-utility">
@@ -212,7 +237,7 @@ const header = `
       <div class="m-sub"><ul>
         <li><a href="products.html#markers">Markers</a></li>
         <li><a href="products.html">View All Products</a></li>
-        <li><a href="catalogs.html">Catalogs</a></li>
+        <li><a href="resources.html#sds">Safety Data Sheets</a></li>
       </ul></div>
     </div>
     <div class="m-group">
@@ -259,7 +284,6 @@ const header = `
     </div>
     <a class="m-link" data-page="videos.html" href="videos.html">Videos</a>
     <a class="m-link" data-page="resources.html" href="resources.html">Resources</a>
-    <a class="m-link" data-page="catalogs.html" href="catalogs.html">Catalogs</a>
     <div class="mobile-cta">
       <a class="btn btn--primary btn--block" href="industrial-shop.html">Request a Quote</a>
       <a class="btn btn--secondary btn--block" href="products.html">Quick Order</a>
@@ -422,6 +446,7 @@ const indexBody = `
       <div class="hero-noise"></div>
       <div class="container">
         <div class="hero-copy reveal">
+          <img class="hero-logo" src="tuslogo.png" alt="Touch Up Solutions" width="280" height="165" />
           <span class="eyebrow">Quality Touch Up &amp; Repair</span>
           <h1>Manufacturing, Distributing, Selling, and <span class="accent">Supporting</span></h1>
           <p class="sub">Quality touch up and repair for furniture, flooring, leather, vinyl, and metal — built for professionals and home users alike.</p>
@@ -479,7 +504,7 @@ const indexBody = `
           </article>
         </div>
         <div class="secondary-links reveal">
-          <a class="link-arrow" href="catalogs.html">View Catalog</a>
+          <a class="link-arrow" href="products.html">Browse All Products</a>
           <a class="link-arrow" href="videos.html">Watch Demo Videos</a>
         </div>
       </div>
@@ -569,9 +594,7 @@ const indexBody = `
           <p>Watch our step-by-step demo videos to see exactly how our products perform.</p>
         </div>
         <div class="video-grid reveal-group">
-          <article class="video-card"><a class="video-thumb" href="videos.html" aria-label="How to Use Burn-In Sticks video"><span class="play-btn"></span></a><div class="video-body"><h4>How to Use Burn-In Sticks</h4><p>Step-by-step burn-in stick application for lasting repairs.</p><a class="link-arrow" href="videos.html">Watch Video</a></div></article>
-          <article class="video-card"><a class="video-thumb" href="videos.html" aria-label="How to Use Touch Up Paint video"><span class="play-btn"></span></a><div class="video-body"><h4>How to Use Touch Up Paint</h4><p>Apply touch up paint evenly for invisible color matching.</p><a class="link-arrow" href="videos.html">Watch Video</a></div></article>
-          <article class="video-card"><a class="video-thumb" href="videos.html" aria-label="How to Repair Laminate Flooring video"><span class="play-btn"></span></a><div class="video-body"><h4>How to Repair Laminate Flooring</h4><p>Fix chips and gouges in laminate floors like a pro.</p><a class="link-arrow" href="videos.html">Watch Video</a></div></article>
+          ${[VIDEOS[0], VIDEOS[1], VIDEOS[5]].map(videoCard).join('\n          ')}
         </div>
         <div class="cta-center reveal"><a class="btn btn--secondary" href="videos.html">Browse All Videos</a></div>
       </div>
@@ -588,10 +611,10 @@ const indexBody = `
             <form class="news-form"><input type="email" placeholder="Your email address" aria-label="Email address" required /><button class="btn btn--primary" type="submit">Subscribe</button></form>
           </div>
           <div class="callout-pane callout-pane--catalog">
-            <span class="eyebrow">Catalogs</span>
-            <h3>Download Our Latest Catalog</h3>
-            <p>Browse the full Touch Up Solutions product line in one convenient PDF.</p>
-            <a class="btn btn--primary" href="catalogs.html">View Catalogs</a>
+            <span class="eyebrow">Resources</span>
+            <h3>Safety Data Sheets &amp; Guides</h3>
+            <p>Access SDS documents, How-To guides, and demo videos for the full product line.</p>
+            <a class="btn btn--primary" href="resources.html">View Resources</a>
           </div>
         </div>
       </div>
@@ -926,21 +949,17 @@ function homeSubPage(file, type, h1, desc, content, relatedLinks) {
 
 homeSubPage('home-fill-sticks.html','Furniture Fill Sticks','Furniture Fill Sticks',
   'Color-matched fill sticks for covering scratches, chips, and gouges on wood furniture and surfaces. Easy to apply, no heat required.',
-  { shop: 'wood-repair', only: 'Fill Sticks' },
+  { shop: 'home-fill-sticks' },
   [['howto-furniture.html','Touch Up Scratches on Furniture'],['howto-cabinets.html','Touch Up Wood Cabinets'],['howto-burnin-sticks.html','Use Burn-In Sticks']]);
 
 homeSubPage('home-markers.html','Furniture Markers','Furniture Markers',
-  'Touch up markers for fast, precise color repair on wood furniture, cabinets, and floors. Available across the full wood-tone range.',
-  { shop: 'wood-repair', only: 'Touch Up Markers' },
+  'Touch up markers for fast, precise color repair on wood furniture, cabinets, and floors.',
+  { shop: 'home-markers' },
   [['howto-laminate-scratches.html','Repair Scratches on Laminate'],['howto-furniture.html','Touch Up Furniture'],['howto-cabinets.html','Touch Up Cabinets']]);
 
 homeSubPage('home-touchup-kits.html','Furniture Touch Up Kits','Furniture Touch Up Kits',
-  'Complete touch up kits combine markers, fill sticks, and tools for common furniture repairs. Contact us for current kit configurations and pricing.',
-  { quote: [
-    ['Kit','Furniture Touch Up Kit','Markers and fill sticks for everyday furniture repair.','#7c5230'],
-    ['Kit','Cabinet Repair Kit','Targeted kit for kitchen cabinet touch-ups.','#9a6a3c'],
-    ['Kit','Laminate Floor Kit','Floor-rated fills and markers for laminate.','#c89a5e'],
-  ] },
+  'Complete touch up kits combine markers, fill sticks, and tools for common furniture repairs — color-matched and ready to use.',
+  { shop: 'home-touchup-kits' },
   [['howto-cabinets.html','Touch Up Cabinets'],['howto-furniture.html','Touch Up Furniture'],['howto-laminate-repair.html','Repair Laminate Flooring']]);
 
 /* =========================================================
@@ -988,10 +1007,10 @@ const industrialBody = `
             <a class="btn btn--primary" href="#">Request a Quote</a>
           </div>
           <div class="callout-pane callout-pane--catalog">
-            <span class="eyebrow">Catalogs</span>
-            <h3>Download the Full Catalog</h3>
-            <p>Browse the complete professional product line with specs and SKUs.</p>
-            <a class="btn btn--primary" href="catalogs.html">View Catalogs</a>
+            <span class="eyebrow">Safety Data Sheets</span>
+            <h3>SDS for Every Product</h3>
+            <p>Download Safety Data Sheets for the complete professional line, organized by category.</p>
+            <a class="btn btn--primary" href="resources.html#sds">View Safety Data Sheets</a>
           </div>
         </div>
       </div>
@@ -1136,29 +1155,17 @@ page('programs.html','Brand Programs — Touch Up Solutions','Dedicated touch-up
 /* =========================================================
    VIDEOS
    ========================================================= */
-const YT = 'https://www.youtube.com/user/touchupsolutions/featured';
-const videoList = [
-  ['How to Touch Up Wood Kitchen Cabinets','Restore cabinet doors, frames, and edges to a factory finish.'],
-  ['How to Touch Up Scratches on Furniture','Conceal scratches on wood furniture with the right technique.'],
-  ['How to Repair Laminate Flooring','Fix chips, cracks, and gouges in laminate panels.'],
-  ['How to Repair Scratches on Laminate Floor','Quick marker and fill-stick fixes for surface scratches.'],
-  ['How to Use a Burn-In Knife','Professional burn-in knife technique for deep gouges.'],
-  ['How to Use Burn-In Sticks','Durable, color-matched fills for furniture and flooring.'],
-  ['How to Use Metal Epoxy','Strong, lasting two-part epoxy repairs on metal.'],
-  ['How to Use Touch Up Paint','Invisible color matching on furniture, cabinets, and trim.'],
-  ['Product Overview: Touch Up Solutions Full Line','A tour of the complete Touch Up Solutions product range.'],
-];
 const videosBody = `
-    ${pageHero([{label:'Home',href:'index.html'},{label:'Videos'}],'Demo Videos','Demo Videos','Watch step-by-step demonstrations of our products in action — from wood repair to leather restoration.')}
+    ${pageHero([{label:'Home',href:'index.html'},{label:'Videos'}],'Demo Videos','Demo Videos','Watch step-by-step demonstrations of our products in action — every video links straight to the full demo on our YouTube channel.')}
     <section class="section-pad bg-cream">
       <div class="container">
         <div class="video-grid reveal-group">
-          ${videoList.map(v => `<article class="video-card"><a class="video-thumb" href="${YT}" target="_blank" rel="noopener" aria-label="${v[0]} video"><span class="play-btn"></span></a><div class="video-body"><h4>${v[0]}</h4><p>${v[1]}</p><a class="link-arrow" href="${YT}" target="_blank" rel="noopener">Watch Video</a></div></article>`).join('\n          ')}
+          ${VIDEOS.map(videoCard).join('\n          ')}
         </div>
-        <div class="cta-center reveal"><a class="btn btn--primary" href="${YT}" target="_blank" rel="noopener">Visit our YouTube Channel</a></div>
+        <div class="cta-center reveal"><a class="btn btn--primary" href="${YT_CHANNEL}" target="_blank" rel="noopener">Visit our YouTube Channel</a></div>
       </div>
     </section>`;
-page('videos.html','Demo Videos — Touch Up Solutions','Watch step-by-step demonstrations of Touch Up Solutions products in action — from wood repair to leather restoration.', videosBody);
+page('videos.html','Demo Videos — Touch Up Solutions','Watch step-by-step demonstrations of Touch Up Solutions products in action — fill sticks, burn-in, markers, toners, powders, and more.', videosBody);
 
 /* =========================================================
    RESOURCES
@@ -1172,19 +1179,43 @@ const faqs = [
   ['How do I find the right product for my repair?','Use our How To guides or contact us directly.'],
   ['Do you ship internationally?','Contact us for international shipping inquiries.'],
 ];
+const SDS_ORDER = ['Adhesives','Aerosols','Burn-In Sticks','Edging Sticks','Epoxy Sticks','Fill Sticks',
+  'Markers','Pencils','Powders','Powder Sticks','Putty','Lube / Cleaners / Polishes','Leather / Vinyl','Metal'];
+const dlIcon = '<svg class="dl-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>';
+const sdsTotal = SDS_ORDER.reduce((n, c) => n + ((SDS[c] || []).length), 0);
+const sdsGroups = SDS_ORDER.filter(c => SDS[c] && SDS[c].length).map(cat => {
+  const items = SDS[cat];
+  const links = items.map(it =>
+    `<a class="sds-link" href="${it.url}" target="_blank" rel="noopener"><span class="pdf-ico">PDF</span><span class="sds-name">${it.label}</span>${dlIcon}</a>`
+  ).join('\n            ');
+  return `<div class="sds-card"><h3>${cat}</h3><span class="sds-count">${items.length} sheet${items.length > 1 ? 's' : ''}</span><div class="sds-list">\n            ${links}\n          </div></div>`;
+}).join('\n          ');
+
 const resourcesBody = `
-    ${pageHero([{label:'Home',href:'index.html'},{label:'Resources'}],'Help &amp; Support','Resources','Everything you need to get the most out of Touch Up Solutions products — guides, FAQs, shipping info, and more.')}
+    ${pageHero([{label:'Home',href:'index.html'},{label:'Resources'}],'Help &amp; Support','Resources','Everything you need to get the most out of Touch Up Solutions products — Safety Data Sheets, How-To guides, demo videos, and answers to common questions.')}
     <section class="section-pad bg-cream">
       <div class="container">
         <div class="card-grid-4 reveal-group">
+          <a class="cat-card" href="#sds"><span class="cat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"></path><path d="M15 3v4h4M9 13h6M9 17h6"></path></svg></span><h3>Safety Data Sheets</h3><p>Download SDS documents for every product line, organized by category.</p><span class="link-arrow">View SDS Library</span></a>
           <a class="cat-card" href="howto.html"><span class="cat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h10"></path></svg></span><h3>How To Guides</h3><p>Step-by-step instructions for every repair application.</p><span class="link-arrow">View Guides</span></a>
           <a class="cat-card" href="videos.html"><span class="cat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"></rect><path d="M10 9l5 3-5 3z"></path></svg></span><h3>Demo Videos</h3><p>Watch our products in action with technique demonstrations.</p><span class="link-arrow">Watch Videos</span></a>
-          <a class="cat-card" href="catalogs.html"><span class="cat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"></path><path d="M15 3v4h4"></path></svg></span><h3>Catalogs</h3><p>Download our latest product catalogs in PDF format.</p><span class="link-arrow">View Catalogs</span></a>
           <a class="cat-card" href="#faq"><span class="cat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9a2.5 2.5 0 1 1 3 2.4c-.8.3-1 .8-1 1.6M12 17h.01"></path></svg></span><h3>FAQs</h3><p>Answers to common questions about products, shipping, and ordering.</p><span class="link-arrow">View FAQs</span></a>
         </div>
       </div>
     </section>
-    <section class="section-pad bg-parchment" id="faq">
+    <section class="section-pad bg-parchment" id="sds">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">Safety Data Sheets</span>
+          <h2>SDS Library</h2>
+          <p>Download Safety Data Sheets for the full Touch Up Solutions product line — ${sdsTotal} documents across ${SDS_ORDER.filter(c => SDS[c]).length} categories. Click any sheet to open the PDF.</p>
+        </div>
+        <div class="sds-groups reveal-group">
+          ${sdsGroups}
+        </div>
+      </div>
+    </section>
+    <section class="section-pad bg-cream" id="faq">
       <div class="container">
         <div class="section-head section-head--center reveal">
           <span class="eyebrow">Frequently Asked</span>
@@ -1195,29 +1226,9 @@ const resourcesBody = `
         </div>
       </div>
     </section>`;
-page('resources.html','Resources — Touch Up Solutions','Guides, FAQs, shipping info, and catalogs — everything you need to get the most out of Touch Up Solutions products.', resourcesBody);
+page('resources.html','Resources &amp; SDS — Touch Up Solutions','Download Safety Data Sheets for every Touch Up Solutions product line, plus How-To guides, demo videos, and FAQs.', resourcesBody);
 
-/* =========================================================
-   CATALOGS
-   ========================================================= */
-const catalogs = [
-  ['Touch Up Solutions Full Product Catalog','Our complete product line across wood, leather, vinyl, and metal repair in one comprehensive catalog.'],
-  ['Wood Repair Catalog','Every wood and furniture repair product — fill sticks, burn-in sticks, markers, powders, and more.'],
-  ['Leather &amp; Vinyl Repair Catalog','The full leather and vinyl restoration system, from pigmented repair to topcoats and accessories.'],
-];
-const catalogsBody = `
-    ${pageHero([{label:'Home',href:'index.html'},{label:'Catalogs'}],'Download Center','Catalogs','Download our product catalogs to browse the full Touch Up Solutions line.')}
-    <section class="section-pad bg-cream">
-      <div class="container">
-        <div class="card-grid-3 reveal-group">
-          ${catalogs.map(c => `<article class="catalog-card"><span class="catalog-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"></path><path d="M15 3v4h4M9 13h6M9 17h6M12 9v8"></path></svg></span><h3>${c[0]}</h3><p>${c[1]}</p><a class="btn btn--primary" href="#">Download PDF</a></article>`).join('\n          ')}
-        </div>
-        <div class="center reveal" style="margin-top:40px;">
-          <p class="lead">Need a printed catalog? Contact us at <a class="link-arrow" href="resources.html" style="display:inline-flex;">Contact Us</a></p>
-        </div>
-      </div>
-    </section>`;
-page('catalogs.html','Catalogs — Touch Up Solutions','Download Touch Up Solutions product catalogs to browse the full line of wood, leather, vinyl, and metal repair products.', catalogsBody);
+/* Catalogs page removed per spec — replaced by the SDS library on Resources. */
 
 /* =========================================================
    CHECKOUT
